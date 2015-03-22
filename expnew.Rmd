@@ -1,5 +1,5 @@
 ---
-title: "Exponential distribution"
+title: "Exponential distribution, LLN, CLT"
 author: "Bartek Skorulski"
 date: "March 14th, 2014"
 output: rmarkdown::tufte_handout
@@ -7,8 +7,7 @@ output: rmarkdown::tufte_handout
 
 # Introduction
 
-In this project you will investigate the exponential distribution. We ilustrate its 
-properites via simpulations in R. We use the follwing packages:
+In this project you will investigate behavour of a sequence of random varaibles that follow the exponential distribution. We ilustrate Law of Large Numbers (LLN) nad Central Limit Theorem (CLT) via simpulations using R, a programming language especially design for statistical computing and graphics.
 
 ```{r, message=FALSE, warning=FALSE, echo=FALSE}
 require("knitr")
@@ -16,6 +15,8 @@ require("markdown")
 require("ggplot2")
 require("ggthemes")
 require("data.table")
+require("grid")
+require("gridExtra")
 ```
 # Exponential distribtion
 
@@ -33,24 +34,28 @@ ggplot() + geom_path(aes(x,dexp(x,lambda)))+labs(x="",y="")+theme_tufte()
 
 # Sample mean and variance
 
-Now we see how the sample mean approximate the
-theoretical one.
+Now we see how the sample mean and sample variance approximate the
+theoretical mean and variance. We use R function *rexp* that produces 40 samples. Then 
+we calculate means and variances for first *k* samples for *k=1...40*. 
 
-```{r, fig.height=1.5, fig.cap = "Sample means converging to the theoretical one."}
-N <- 10000
+```{r}
+N <- 40
 set.seed(1110)
 exps <- rexp(N,lambda)
 means <- sapply(1:N, function(n) mean(exps[1:n]))
-ggplot() + geom_line(aes(x=1:N, y=means)) + 
+vars <- sapply(1:N, function(n) var(exps[1:n]))
+```
+
+Now we plot the results of our experiments.
+
+```{r, fig.height=2.5, fig.cap = "Sample means and variances converging to the theoretical ones reporesented by red lines."}
+g1 <- ggplot() + geom_line(aes(x=1:N, y=means)) + 
   geom_hline(yintercept=1/lambda, color="red") +
     labs(x="") + theme_tufte()
-```
-And now we see how the sample variance approximate the theoretical one.
-```{r, fig.height=1.5, fig.cap = "Sample variances converging to the theoretical one."}
-vars <- sapply(1:N, function(n) var(exps[1:n]))
-ggplot()+geom_line(aes(2:N, vars[2:N]))+
+g2 <- ggplot()+geom_line(aes(2:N, vars[2:N]))+
   geom_hline(yintercept=1/lambda^2, color="red")+
     labs(x="", y="variances")+theme_tufte()
+grid.arrange(g1,g2,nrow=2)
 ```
 
 # Sum of independent random variable with exponential distribution
@@ -85,7 +90,6 @@ ggplot()+geom_path(aes(x,dgamma(x, shape= k, rate = k*lambda), colour="blue"))+
                  scale_colour_discrete(name  ="Distribution",
                                        labels=c("Normal", "Gamma"))+
   theme_tufte()
-
 ```
 
 # Simulation
@@ -102,11 +106,20 @@ e40.dt <- data.table(means=means)
 x <- seq(e40.m-3.5*e40.sd,e40.m+3.5*e40.sd,e40.sd/10)
 ggplot()+geom_histogram(data=e40.dt,aes(x=means, y=..density..),
                         fill="white", colour="black")+
-    geom_path(aes(x=x, y = dnorm(x, e40.m, e40.sd),colour="red"))+theme_bw()+
+    geom_path(aes(x=x, y = dnorm(x, e40.m, e40.sd),colour="red"))+
         geom_path(aes(x,k*dgamma(k*x, shape= k, scale = 5), colour="blue"))+
             scale_colour_discrete(name  ="Distribution",
-                                  labels=c("Simulation","Normal", "Gamma"))+
-  theme_tufte()
+                                  labels=c("Gamma","Normal"))+
+  theme_tufte()+theme(
+    text = element_text(size = 5),
+    line = element_line(size = 0.1),
+    legend.background = element_rect(fill = "white"),
+    legend.position = c(0.14, 0.80),
+    panel.grid.major = element_line(colour = "grey40"),
+    panel.grid.minor = element_blank()
+  )
+  #theme_tufte()+theme(=element_text(size=10))
+
 ```
 
 
